@@ -7,22 +7,29 @@ router.get("/", async (req, res) => {
   console.log("page hit");
 
   try {
-    const result = await dbModel.getRestaurants();
-    res.render("index", { restaurant: result });
+    const result = await dbModel.getItems();
+    let cost = 0;
+    
+    for (const item of result) {
+      if (parseFloat(item.cost) != NaN) {
+          for (let index = 0; index < item.quantity; index++) {
+              cost += parseFloat(item.cost);
+          }
+      }
+  }
+  console.log(result)
+  res.render("index", { result, cost })
 
-    //Output the results of the query to the Heroku Logs
-    console.log(result);
   } catch (err) {
     res.render("error", { message: "Error reading from MySQL" });
     console.log("Error reading from mysql");
   }
 });
 
-router.post("/addRestaurant", async (req, res) => {
-  console.log("form submit");
+router.post("/addItem", async (req, res) => {
   console.log(req.body);
   try {
-    const success = await dbModel.addRestaurant(req.body);
+    const success = await dbModel.addItem(req.body);
     if (success) {
       res.redirect("/");
     } else {
@@ -36,43 +43,11 @@ router.post("/addRestaurant", async (req, res) => {
   }
 });
 
-router.get("/deleteRestaurant", async (req, res) => {
-  console.log("delete user");
+router.get("/deleteItem", async (req, res) => {
   console.log(req.query);
-  let restaurantID = req.query.id;
-  if (restaurantID) {
-    const success = await dbModel.deleteRestaurant(restaurantID);
-    if (success) {
-      res.redirect("/");
-    } else {
-      res.render("error", { message: "Error writing to MySQL" });
-      console.log("Error writing to mysql");
-      console.log(err);
-    }
-  }
-});
-
-router.get("/review", async (req, res) => {
-  const restaurantId = req.query.id;
-
-  try {
-    const restaurant = await dbModel.getRestaurantById(restaurantId);
-    const result = await dbModel.getReviewRestaurant(restaurantId);
-    res.render("review", { restaurant: result, name: restaurant, id: restaurantId });
-
-    console.log(result);
-  } catch (err) {
-    res.render("error", { message: "Error reading from MySQL" });
-    console.log("Error reading from mysql");
-  }
-});
-
-
-router.get("/deleteReview", async (req, res) => {
-  let restaurantID = req.query.id;
-  if (restaurantID) {
-    const success = await dbModel.deleteReview(restaurantID);
-    console.log("DELETE PLEASEE!!!!!!")
+  let itemID = req.query.id;
+  if (itemID) {
+    const success = await dbModel.deleteItem(itemID);
     if (success) {
       res.redirect("/");
     } else {
@@ -84,20 +59,36 @@ router.get("/deleteReview", async (req, res) => {
 });
 
 
-
-router.post("/addReview", async (req, res) => {
+router.get("/addQuantity", async (req, res) => {
   try {
-    console.log(req.body)
-    const success = await dbModel.addReview(req.body);
+    const itemID = req.query.id;
+    const success = await dbModel.addQuantity(itemID);
     if (success) {
       res.redirect("/");
     } else {
-      res.render("error", { message: "Error writing to MySQL" });
-      console.log("Error writing to MySQL");
+      res.render("error", { message: "Error updating quantity in MySQL" });
+      console.log("Error updating quantity in MySQL");
     }
   } catch (err) {
-    res.render("error", { message: "Error writing to MySQL" });
-    console.log("Error writing to MySQL");
+    res.render("error", { message: "Error updating quantity in MySQL" });
+    console.log("Error updating quantity in MySQL");
+    console.log(err);
+  }
+});
+
+router.get("/removeQuantity", async (req, res) => {
+  try {
+    const itemID = req.query.id;
+    const success = await dbModel.removeQuantity(itemID);
+    if (success) {
+      res.redirect("/");
+    } else {
+      res.render("error", { message: "Error updating quantity in MySQL" });
+      console.log("Error updating quantity in MySQL");
+    }
+  } catch (err) {
+    res.render("error", { message: "Error updating quantity in MySQL" });
+    console.log("Error updating quantity in MySQL");
     console.log(err);
   }
 });

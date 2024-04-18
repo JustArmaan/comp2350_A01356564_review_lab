@@ -1,9 +1,9 @@
 const database = include("/databaseConnection");
 
-async function getRestaurants() {
+async function getItems() {
   let sqlQuery = `
-        SELECT restaurant_id, name, description
-        FROM restaurant;
+        SELECT purchase_item_id, item_name, item_description, cost, quantity
+        FROM purchase_item;
     `;
 
   try {
@@ -17,17 +17,19 @@ async function getRestaurants() {
   }
 }
 
-async function addRestaurant(postData) {
+async function addItem(postData) {
   console.log("postData: ", postData);
 
   let sqlInsertRestaurant = `
-        INSERT INTO restaurant (name, description)
-        VALUES (:name, :description);
+        INSERT INTO purchase_item (item_name, item_description, cost, quantity)
+        VALUES (:item_name, :item_description, :cost, :quantity);
     `;
 
   let params = {
-    name: postData.name,
-    description: postData.description,
+      item_name: postData.item_name,
+      item_description: postData.description,
+      cost: parseFloat(postData.cost),
+      quantity: parseFloat(postData.quantity),
   };
 
   console.log(sqlInsertRestaurant);
@@ -43,17 +45,17 @@ async function addRestaurant(postData) {
   }
 }
 
-async function deleteRestaurant(restaurantId) {
-  let sqlDeleteRestaurant = `
-        DELETE FROM restaurant
-        WHERE restaurant_id = :restaurantID
+async function deleteItem(itemID) {
+  let sqldeleteItem = `
+        DELETE FROM purchase_item
+        WHERE purchase_item_id = :itemID
     `;
   let params = {
-    restaurantID: restaurantId,
+    itemID
   };
-  console.log(sqlDeleteRestaurant);
+  console.log(sqldeleteItem);
   try {
-    await database.query(sqlDeleteRestaurant, params);
+    await database.query(sqldeleteItem, params);
     return true;
   } catch (err) {
     console.log(err);
@@ -61,84 +63,37 @@ async function deleteRestaurant(restaurantId) {
   }
 }
 
-async function getReviewRestaurant(restaurantId) {
-  let sqlQuery = `
-  SELECT review_id, reviewer_name, details, rating
-  FROM review
-  WHERE restaurant_id = :restaurantId;
-`;
-  let params = {
-    restaurantId: restaurantId,
-  };
-
-  try {
-    const results = await database.query(sqlQuery, params);
-    console.log("results: ", results[0]);
-    return results[0];
-  } catch (err) {
-    console.log("Cannot select restaurant table");
-    console.log(err);
-    return null;
-  }
-}
-
-async function getRestaurantById(restaurantId) {
-  let sqlQuery = `
-    SELECT name
-    FROM restaurant
-    WHERE restaurant_id = :restaurantId;
-  `;
-
-  let params = {
-    restaurantId: restaurantId,
-  };
-
-  try {
-    const results = await database.query(sqlQuery, params);
-    return results[0][0];
-  } catch (err) {
-    console.log('Error selecting restaurant:', err);
-    throw err;
-  }
-}
-
-
-async function deleteReview(reviewId) {
-  let sqlDeleteRestaurant = `
-        DELETE FROM review
-        WHERE review_id = :reviewId
+async function addQuantity(itemID) {
+  let sqlUpdateQuantity = `
+        UPDATE purchase_item
+        SET quantity = quantity + 1
+        WHERE purchase_item_id = :itemID;
     `;
-    let params = {
-      reviewId: reviewId,
-    };
-  console.log(sqlDeleteRestaurant);
+  let params = {
+    itemID
+  };
+
   try {
-    await database.query(sqlDeleteRestaurant, params);
+    await database.query(sqlUpdateQuantity, params);
     return true;
   } catch (err) {
     console.log(err);
     return false;
   }
 }
-addReview
 
-async function addReview(postData) {
-  console.log("postData: ", postData);
-  let sqlInsertRestaurant = `
-        INSERT INTO review ( restaurant_id, reviewer_name, details, rating)
-        VALUES (:restaurant_id, :name, :review, :rating);
+async function removeQuantity(itemID) {
+  let sqlUpdateQuantity = `
+        UPDATE purchase_item
+        SET quantity = CASE WHEN quantity > 0 THEN quantity - 1 ELSE 0 END
+        WHERE purchase_item_id = :itemID;
     `;
   let params = {
-    restaurant_id: postData.restaurant_id,
-    name: postData.name,
-    review: postData.review,
-    rating: postData.rating
+    itemID
   };
-  console.log(sqlInsertRestaurant);
-  try {
-    const results = await database.query(sqlInsertRestaurant, params);
-    let insertedID = results.insertId;
 
+  try {
+    await database.query(sqlUpdateQuantity, params);
     return true;
   } catch (err) {
     console.log(err);
@@ -147,11 +102,54 @@ async function addReview(postData) {
 }
 
 module.exports = {
-  getRestaurants,
-  addRestaurant,
-  deleteRestaurant,
-  getReviewRestaurant,
-  getRestaurantById,
-  deleteReview,
-  addReview,
+  getItems,
+  addItem,
+  deleteItem,
+  addQuantity,
+  removeQuantity
 };
+
+
+// async function deleteReview(reviewId) {
+//   let sqlDeleteRestaurant = `
+//         DELETE FROM review
+//         WHERE review_id = :reviewId
+//     `;
+//     let params = {
+//       reviewId: reviewId,
+//     };
+//   console.log(sqlDeleteRestaurant);
+//   try {
+//     await database.query(sqlDeleteRestaurant, params);
+//     return true;
+//   } catch (err) {
+//     console.log(err);
+//     return false;
+//   }
+// }
+// addReview
+
+// async function addReview(postData) {
+//   console.log("postData: ", postData);
+//   let sqlInsertRestaurant = `
+//         INSERT INTO review ( restaurant_id, reviewer_name, details, rating)
+//         VALUES (:restaurant_id, :name, :review, :rating);
+//     `;
+//   let params = {
+//     restaurant_id: postData.restaurant_id,
+//     name: postData.name,
+//     review: postData.review,
+//     rating: postData.rating
+//   };
+//   console.log(sqlInsertRestaurant);
+//   try {
+//     const results = await database.query(sqlInsertRestaurant, params);
+//     let insertedID = results.insertId;
+
+//     return true;
+//   } catch (err) {
+//     console.log(err);
+//     return false;
+//   }
+// }
+
